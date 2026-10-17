@@ -1,19 +1,17 @@
 # Contributing to the Trakt Watch Provider Plugin
 
-The [Silo contribution guide](https://github.com/Silo-Server/.github/blob/main/CONTRIBUTING.md)
-covers project-wide coordination, focused changes, evidence, AI disclosure, and
-pull request expectations. Those requirements apply here; this guide adds the
-plugin-specific workflow.
+This is the community fork maintained at
+[kyle95wm/silo-plugin-watchprovider-trakt](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt).
+Report plugin problems and propose behavior changes in this fork's issue tracker.
+The original Silo Trakt repository is archived and does not maintain this fork.
 
 ## Before you start
 
-Open an [issue](https://github.com/Silo-Server/silo-plugin-watchprovider-trakt/issues)
-before changing authentication, reconciliation, idempotency, supported state,
-configuration, or the advertised capability. This repository owns the Trakt
-adapter; plugin contracts belong in
-[`silo-plugin-sdk`](https://github.com/Silo-Server/silo-plugin-sdk), while host
-watch-sync orchestration belongs in
-[`silo-server`](https://github.com/Silo-Server/silo-server).
+Open an issue in this fork before changing authentication, reconciliation,
+idempotency, supported state, configuration, or advertised capabilities. Include
+reproduction steps and redact secrets and personal watch history. This repository
+owns the Trakt adapter; SDK contracts and Silo's host orchestration remain in
+their respective upstream projects.
 
 ## Development setup
 
@@ -43,6 +41,6 @@ behaviors change.
 ## Open the pull request
 
 Use a Conventional Commit title, explain any sync, privacy, or retry risk, and
-paste the actual validation results. Read the
-[AI-assisted contribution policy](https://github.com/Silo-Server/silo-server/blob/main/docs/ai-contributions.md)
-and include its disclosure block.
+paste the actual validation results. For AI-assisted changes, disclose the harness, tools, model identifier when
+available, and scope of human review. Never claim checks or live verification
+that did not run. Review non-trivial changes adversarially before submitting.

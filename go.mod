@@ -1,4 +1,4 @@
-module github.com/Silo-Server/silo-plugin-watchprovider-trakt
+module github.com/kyle95wm/silo-plugin-watchprovider-trakt
 
 go 1.26.4
 

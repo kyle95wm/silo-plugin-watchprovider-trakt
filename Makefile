@@ -1,8 +1,8 @@
-.PHONY: build build-all clean lint test
+.PHONY: build build-all package clean lint test
 
 BINARY=plugin
 PLATFORMS=linux/amd64 linux/arm64 darwin/arm64
-VERSION ?= $(shell git describe --tags --always 2>/dev/null | sed 's/^v//')
+VERSION ?= $(shell python3 -c 'import json; print(json.load(open("manifest.json"))["version"])')
 LDFLAGS=-s -w -X main.version=$(VERSION)
 
 build:
@@ -14,6 +14,9 @@ build-all:
 		GOOS=$${platform%%/*} GOARCH=$${platform##*/} CGO_ENABLED=0 \
 		go build -trimpath -ldflags="$(LDFLAGS)" -o dist/$(BINARY)-$${platform%%/*}-$${platform##*/} .; \
 	done
+
+package: build-all
+	python3 scripts/package_release.py --version "$(VERSION)"
 
 test:
 	go test ./...

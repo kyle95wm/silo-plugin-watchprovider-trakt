@@ -17,12 +17,12 @@ func loadManifest(t *testing.T) *pluginv1.PluginManifest {
 	return parsed
 }
 
-// The host registers the plugin under the provider key Silo's built-in Trakt
-// provider used, so the identity must match it.
-func TestManifestIdentifiesTheTraktProvider(t *testing.T) {
+// Silo refuses the retired official plugin ID. This fork has its own identity
+// and keeps the capability ID used by its RPC adapter.
+func TestManifestIdentifiesTheCommunityTraktProvider(t *testing.T) {
 	t.Parallel()
 	parsed := loadManifest(t)
-	if parsed.GetPluginId() != "silo.watchprovider.trakt" || parsed.GetCategory() != "Watch Providers" {
+	if parsed.GetPluginId() != "community.watchprovider.trakt" || parsed.GetCategory() != "Watch Providers" {
 		t.Fatalf("plugin = %q in %q", parsed.GetPluginId(), parsed.GetCategory())
 	}
 	capabilities := parsed.GetCapabilities()
@@ -30,7 +30,7 @@ func TestManifestIdentifiesTheTraktProvider(t *testing.T) {
 		t.Fatalf("capabilities = %d, want 1", len(capabilities))
 	}
 	capability := capabilities[0]
-	if capability.GetType() != "watch_sync_provider.v1" || capability.GetId() != "trakt" || capability.GetDisplayName() != "Trakt" {
+	if capability.GetType() != "watch_sync_provider.v1" || capability.GetId() != "trakt" || capability.GetDisplayName() != "Trakt (Community)" {
 		t.Fatalf("capability = %q %q %q", capability.GetType(), capability.GetId(), capability.GetDisplayName())
 	}
 	if len(capability.GetConfigSchema()) != 0 {
@@ -105,7 +105,7 @@ func TestManifestDeclaresTheTraktAppConfig(t *testing.T) {
 	if id := fields["client_id"]; id == nil || id.GetSecret() || id.GetControl() == pluginv1.AdminFormControl_ADMIN_FORM_CONTROL_PASSWORD || !id.GetRequired() {
 		t.Fatalf("client_id field = %v", id)
 	}
-	if secret := fields["client_secret"]; secret == nil || !secret.GetSecret() || !secret.GetRequired() {
+	if secret := fields["client_secret"]; secret == nil || !secret.GetSecret() || secret.GetRequired() {
 		t.Fatalf("client_secret field = %v", secret)
 	}
 	if len(fields) != 2 {

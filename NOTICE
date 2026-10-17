@@ -1,0 +1,28 @@
+Trakt Community Watch Provider for Silo
+
+This is an independent derivative of the Silo Trakt watch-provider plugin,
+distributed under AGPL-3.0-only. The original LICENSE is included unchanged.
+This plugin is not published or supported by Silo Server or Trakt.
+
+Original source:
+https://github.com/Silo-Server/silo-plugin-watchprovider-trakt
+Base commit: fd0fa8138dc6ba4bd5caa29f9b5497bce5c3863d
+
+Includes the optional client-secret change and regression coverage proposed
+by Quick104 in PR #3 (commit 7af98f7d821ada1aece967f5ab4885f9892fdddf):
+https://github.com/Silo-Server/silo-plugin-watchprovider-trakt/pull/3
+The original patch credits Claude Opus 5.5 <noreply@anthropic.com>.
+
+Community changes (2026-10-16): separate plugin/module identity and user agent,
+community-facing presentation, required client-ID schema, reproducible release
+packages with source, independent CI/release workflows, and reconnection docs.
+
+The Trakt protocol capability remains "trakt"; the plugin ID is now
+"community.watchprovider.trakt". These are separate identities in Silo.
+
+When redistributing binaries, provide the corresponding modified source under
+the included license. The package command creates a matching source archive.
+Community source and releases:
+https://github.com/kyle95wm/silo-plugin-watchprovider-trakt
+https://github.com/kyle95wm/silo-plugin-watchprovider-trakt/releases
+Maintainer: kyle95wm

@@ -1,8 +1,31 @@
-# Trakt watch-provider plugin for Silo
+# Trakt Community Watch Provider for Silo
 
-Syncs Silo profiles with their [Trakt](https://trakt.tv) accounts through Silo's `watch_sync_provider.v1` plugin contract. It replaces the Trakt provider that was built into the Silo server, with the same behavior and the same stored identifiers, so existing connections carry over.
+A replacement for Silo's archived Trakt plugin, based on upstream version 0.2.0 and [PR #3](https://github.com/Silo-Server/silo-plugin-watchprovider-trakt/pull/3). It uses Silo's existing `watch_sync_provider.v1` interface and retains the original watch-sync capabilities.
 
-Version 0.2.0 needs a Silo server whose plugin host supports `silo-plugin-sdk` v0.21, the release that added dropped shows to the contract. An older server ignores the plugin's dropped-show support and syncs everything else.
+- Plugin ID: `community.watchprovider.trakt`
+- Provider shown in Silo: **Trakt (Community)**
+- Version: **0.3.0**
+- SDK: `silo-plugin-sdk` **v0.21.0**, API **v1**
+
+This is an independent fork. Silo's retired ID, `silo.watchprovider.trakt`, is blocked by the host; this fork has its own ID. Silo assigns community connections a provider key of `plugin:<installation-id>:trakt`. Keep the plugin ID stable when publishing updates.
+
+## Install
+
+Download a platform package from [GitHub Releases](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt/releases/latest). Choose the package for the **Silo server**, which may differ from your desktop:
+
+| Server | Package in `dist/` |
+| --- | --- |
+| Linux x86-64, including typical Unraid/Docker servers | `trakt-community-0.3.0-linux-amd64.zip` |
+| Linux ARM64 | `trakt-community-0.3.0-linux-arm64.zip` |
+| macOS Apple Silicon | `trakt-community-0.3.0-darwin-arm64.zip` |
+
+1. In Silo's admin plugin page, upload the matching ZIP using the local plugin installation control. The ZIP contains `manifest.json` and an executable named `plugin`. If your Silo version offers a binary upload instead, upload the matching `plugin-<os>-<arch>` file.
+2. Enable **Trakt Community Watch Provider** and open its settings.
+3. Configure your Trakt application using the steps below, then connect each profile.
+
+`dist/checksums.txt` contains SHA-256 checksums. From `dist/`, verify with `shasum -a 256 -c checksums.txt` (macOS) or `sha256sum -c checksums.txt` (Linux). The matching `trakt-community-0.3.0-source.zip` contains the modified source.
+
+The host needs plugin watch-sync and device-code support; SDK v0.21 support enables dropped-show sync. Older hosts may ignore dropped shows. No Silo server patch is required for the current community-plugin registration path. Upload controls may differ between Silo versions; catalog-only hosted environments need their operator to permit local plugins.
 
 ## Capabilities
 
@@ -22,38 +45,50 @@ Every sync reads the full Trakt lists; Trakt has no change feed the plugin could
 
 The plugin keeps to Trakt's rate limits for each connection: one write per second, and paged reads paced to stay under 500 per five minutes. When Trakt asks it to wait ten seconds or less, the plugin waits and retries; a longer wait, or no stated wait (five minutes), pauses that profile's sync until then.
 
-## Setup
+## Configure Trakt
 
-1. Create an API app at [trakt.tv/oauth/applications/new](https://trakt.tv/oauth/applications/new). Trakt requires a redirect URI; enter `urn:ietf:wg:oauth:2.0:oob`. Device sign-in does not use it.
-2. Install the plugin in Silo, open its settings, and enter the app's **Client ID** and **Client secret**. Every profile on the server connects through this one app.
-3. Each profile connects its own Trakt account from its watch-provider settings.
+1. Create your own API application on the [Trakt developer portal](https://developer.trakt.tv/apps). Follow the portal's account-verification requirements.
+2. If the form requires a redirect URI, enter an HTTPS address you control. This plugin uses device-code sign-in and never sends a redirect URI.
+3. In the plugin settings, enter the **Client ID**. The **Client secret** is optional; leave it blank if Trakt did not issue one. If you change to an app without a secret, clear any previously saved secret.
+4. For each Silo profile, open watch-provider settings, choose **Trakt (Community)**, and connect. Enter the displayed code at the verification URL, normally [trakt.tv/activate](https://trakt.tv/activate).
+5. Let the first sync finish, then confirm that watched titles and resume progress appear as expected. Enable the export options you want in the connection settings.
 
-Until the client ID and secret are set, every Trakt request fails with a message asking an administrator to configure the plugin.
+All profiles use the configured application, while each profile authorizes its own Trakt account. Client-secret-free device polling and refresh are the changes from PR #3. Browser authorization-code sign-in with PKCE is a separate flow and is not implemented in this release. See [Trakt's PKCE guidance](https://developer.trakt.tv/docs/pkce).
 
-## Upgrading from Silo's built-in Trakt provider
+The plugin receives configuration and credentials from Silo for each RPC. It does not store or log tokens; Silo owns encrypted credential storage. Every request requires the Client ID, and an optional saved Client secret is sent only to the token endpoints.
 
-Existing Trakt connections move to the plugin once you run a Silo server release that serves Trakt through it. That release registers the plugin under the built-in provider's key, keeps every profile's sign-in and sync records, and copies the client ID and secret saved for the built-in provider into the plugin's settings. Profiles do not need to reconnect.
+## Reconnect after the official plugin is removed
 
-The first sync reads each account in full, as every Trakt sync does. Plays and ratings Silo already imported are not imported twice, and plays Silo already sent are not sent again.
+Silo's retirement migration deletes the original Trakt connections and their tokens, disables the official plugin, and preserves already imported watch history. This fork cannot recover deleted credentials. Re-enter the app settings and connect each profile again.
 
-A connection whose refresh token Trakt issued before its 2026 sign-in migration fails with "reconnect Trakt" under the plugin, as it did under the built-in provider. Signing in again fixes it.
+This creates a new connection with fresh sync bookkeeping and a full initial import. The original history-write de-duplication is retained, but an upgraded server with existing history still needs a live smoke test before you rely on exports. Avoid running the old official connection and this replacement together on a pre-retirement server.
 
-## Development
+Legacy Trakt collections and home rows are host features and are not restored by this watch-sync plugin. Favorites and watchlist sync remain part of the plugin.
 
-The plugin builds against `silo-plugin-sdk` v0.21.0.
+## Build and validate
 
-```bash
-make test
+Use Go 1.26.4 or a newer Go 1.26 patch release, Python 3, and Make. Dependencies resolve from the pinned public SDK tag; no local SDK checkout is required.
+
+```sh
+GOWORK=off go test -race ./...
+GOWORK=off go vet ./...
+GOWORK=off go build ./...
+GOWORK=off go run . manifest
+gofmt -l .
 make build
-./plugin manifest
+make package
 ```
 
-`make build-all` produces static binaries for the platforms declared in `manifest.json`.
+`make package` builds static binaries for every declared platform, creates installation ZIPs with executable permissions, writes manifests with actual binary checksums, and includes the corresponding source archive. The default build version comes from `manifest.json`. Update that version before releasing; tag it as `v<version>` to run the release workflow in your own repository.
 
-## Contributing
+The workflows publish releases in [kyle95wm/silo-plugin-watchprovider-trakt](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt). They do not notify Silo's official catalog. To publish a new version, update `manifest.json`, push the change, wait for CI, then push a matching `v<version>` tag. Binary downloads belong in GitHub Releases; `dist/` stays out of Git.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Changes to authentication, reconciliation, idempotency, or the watch-sync contract should start as an issue.
+## Validation limits
 
-## License
+Automated tests use a local Trakt HTTP stub. They cover authentication with and without a Client secret, refresh-token rotation, state imports, event exports, rate limits, and upstream error handling. They do not demonstrate successful live authorization or installation on your Silo server.
 
-AGPL-3.0-only.
+After installation, connect a test profile, verify an import, mark one test title watched, and confirm one entry arrives on Trakt. Repeat the sync and check that no extra play appears. Test resume/scrobble events and a reconnect before enabling additional profiles.
+
+## Source and license
+
+Derived from [Silo's original Trakt plugin](https://github.com/Silo-Server/silo-plugin-watchprovider-trakt), with the optional-secret patch proposed by Quick104 in PR #3. See [NOTICE](NOTICE) for provenance and changes. The original AGPL-3.0-only [LICENSE](LICENSE) is retained. Distribute the corresponding modified source with binaries and comply with the license's source-offer requirements for network use.

@@ -22,12 +22,6 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Configure module resolution
-        run: |
-          go env -w GOPROXY=direct
-          go env -w GOPRIVATE=github.com/Silo-Server/*
-          go env -w GONOSUMDB=github.com/Silo-Server/*
-
       - name: Reject committed local SDK replaces
         run: |
           if grep -Eq '^replace github.com/Silo-Server/silo-plugin-sdk => /' go.mod; then
@@ -54,7 +48,7 @@ jobs:
         run: go run . manifest >/dev/null
 
       - name: Build every release platform
-        run: make build-all
+        run: make package
 
   lint:
     runs-on: ubuntu-latest
@@ -64,12 +58,6 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
-      - name: Configure module resolution
-        run: |
-          go env -w GOPROXY=direct
-          go env -w GOPRIVATE=github.com/Silo-Server/*
-          go env -w GONOSUMDB=github.com/Silo-Server/*
 
       - uses: golangci/golangci-lint-action@v8
         with:

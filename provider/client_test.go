@@ -211,7 +211,7 @@ func TestTraktRequestsCarryTraktHeaders(t *testing.T) {
 		"trakt-api-key":     testClientID,
 		"Authorization":     "Bearer " + testAccessToken,
 		// Trakt may block requests without an identifying User-Agent.
-		"User-Agent": "silo-plugin-watchprovider-trakt/1.2.3",
+		"User-Agent": "silo-plugin-watchprovider-trakt-community/1.2.3",
 	} {
 		if got := header.Get(key); got != want {
 			t.Errorf("%s = %q, want %q", key, got, want)
@@ -222,11 +222,11 @@ func TestTraktRequestsCarryTraktHeaders(t *testing.T) {
 func TestUserAgentKeepsOnlyTokenCharacters(t *testing.T) {
 	t.Parallel()
 	for version, want := range map[string]string{
-		"":                 "silo-plugin-watchprovider-trakt/dev",
-		"v0.1.0":           "silo-plugin-watchprovider-trakt/0.1.0",
-		"0.1.0-3-gabc1234": "silo-plugin-watchprovider-trakt/0.1.0-3-gabc1234",
-		"0.1 (évil)\r\nX":  "silo-plugin-watchprovider-trakt/0.1vilX",
-		" \t":              "silo-plugin-watchprovider-trakt/dev",
+		"":                 "silo-plugin-watchprovider-trakt-community/dev",
+		"v0.1.0":           "silo-plugin-watchprovider-trakt-community/0.1.0",
+		"0.1.0-3-gabc1234": "silo-plugin-watchprovider-trakt-community/0.1.0-3-gabc1234",
+		"0.1 (évil)\r\nX":  "silo-plugin-watchprovider-trakt-community/0.1vilX",
+		" \t":              "silo-plugin-watchprovider-trakt-community/dev",
 	} {
 		if got := userAgent(version); got != want {
 			t.Errorf("userAgent(%q) = %q, want %q", version, got, want)
