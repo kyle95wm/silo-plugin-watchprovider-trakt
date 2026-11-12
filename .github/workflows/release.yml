@@ -11,6 +11,8 @@ permissions:
 
 env:
   GOWORK: off
+  # Pinned commit containing the Silo repository-catalog updater.
+  SILO_PLUGINS_REF: 79d8dc98f3d2ab08e94108a1d8a1370b39d38482
 
 jobs:
   build:
@@ -71,3 +73,46 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+  catalog:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Check out catalog branch
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git fetch origin gh-pages
+            git checkout --force -B gh-pages FETCH_HEAD
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+            printf '{"plugins":[]}\n' > manifest.json
+          fi
+
+      - name: Add release to catalog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          go run "github.com/Silo-Server/silo-plugins/cmd/update-catalog@${SILO_PLUGINS_REF}" \
+            -repo "${GITHUB_REPOSITORY}" -tag "${GITHUB_REF_NAME}" -manifest manifest.json
+
+      - name: Publish catalog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          if git diff --cached --quiet; then
+            echo "Catalog already contains ${GITHUB_REF_NAME}."
+            exit 0
+          fi
+          git commit -m "catalog: ${GITHUB_REF_NAME}"
+          git push origin gh-pages

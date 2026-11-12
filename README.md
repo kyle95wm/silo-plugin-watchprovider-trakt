@@ -11,6 +11,12 @@ This is an independent fork. Silo's retired ID, `silo.watchprovider.trakt`, is b
 
 ## Install
 
+The first tagged release creates the `gh-pages` branch. Enable GitHub Pages for
+that branch's root in the repository settings, then add
+`https://kyle95wm.github.io/silo-plugin-watchprovider-trakt/manifest.json` in
+Silo's **Admin → Plugins → Repositories**. Future tagged releases update the
+catalog automatically.
+
 Download a platform package from [GitHub Releases](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt/releases/latest). Choose the package for the **Silo server**, which may differ from your desktop:
 
 | Server | Package in `dist/` |
@@ -81,7 +87,7 @@ make package
 
 `make package` builds static binaries for every declared platform, creates installation ZIPs with executable permissions, writes manifests with actual binary checksums, and includes the corresponding source archive. The default build version comes from `manifest.json`. Update that version before releasing; tag it as `v<version>` to run the release workflow in your own repository.
 
-The workflows publish releases in [kyle95wm/silo-plugin-watchprovider-trakt](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt). They do not notify Silo's official catalog. To publish a new version, update `manifest.json`, push the change, wait for CI, then push a matching `v<version>` tag. Binary downloads belong in GitHub Releases; `dist/` stays out of Git.
+The workflows publish releases in [kyle95wm/silo-plugin-watchprovider-trakt](https://github.com/kyle95wm/silo-plugin-watchprovider-trakt) and add each tagged release to this repository's GitHub Pages catalog. This does not add the plugin to Silo's official catalog. To publish a new version, update `manifest.json`, push the change, wait for CI, then push a matching `v<version>` tag. Binary downloads belong in GitHub Releases; `dist/` stays out of Git.
 
 ## Validation limits
 
