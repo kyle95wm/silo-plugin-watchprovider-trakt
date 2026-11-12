@@ -14,8 +14,16 @@ import (
 func (s *Server) applyScrobble(ctx context.Context, client *apiClient, operation pluginv1.WatchSyncOperation, group eventGroup) *pluginv1.WatchSyncFault {
 	index := group.pending[0]
 	event := group.events[index]
-	if kind := mediaKind(event.GetMedia()); kind != kindMovie && kind != kindEpisode {
+	media := event.GetMedia()
+	kind := mediaKind(media)
+	if kind != kindMovie && kind != kindEpisode {
 		group.reject(index, "Trakt scrobbles movies and episodes only")
+		return nil
+	}
+	own := traktIDsFrom(media.GetExternalIds())
+	series := traktIDsFrom(media.GetSeriesExternalIds())
+	if !hasAnyID(own) && (kind == kindMovie || !hasAnyID(series)) {
+		group.reject(index, "Scrobble needs an IMDb, TMDB, or TVDB ID")
 		return nil
 	}
 	path := "/scrobble/start"

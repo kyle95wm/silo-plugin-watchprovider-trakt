@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -353,6 +354,36 @@ func TestScrobblePayloadNamesTheItemLikeTheBuiltInProvider(t *testing.T) {
 		if string(encoded) != tc.want {
 			t.Errorf("%s: payload = %s\nwant %s", name, encoded, tc.want)
 		}
+	}
+}
+
+func TestScrobbleRejectsEventsWithoutIdentifiableIDs(t *testing.T) {
+	t.Parallel()
+	var requests atomic.Int32
+	upstream := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		requests.Add(1)
+	}))
+	defer upstream.Close()
+	server, _ := newTestServer(t, upstream)
+
+	episode := &pluginv1.WatchSyncEvent{
+		EventId:   "episode-without-ids",
+		Operation: pluginv1.WatchSyncOperation_WATCH_SYNC_OPERATION_SCROBBLE_START,
+		Media: &pluginv1.WatchSyncMedia{
+			MediaType:     pluginv1.WatchSyncMediaType_WATCH_SYNC_MEDIA_TYPE_EPISODE,
+			SeasonNumber:  1,
+			EpisodeNumber: 1,
+		},
+	}
+	movie := movieEvent("movie-without-ids", pluginv1.WatchSyncOperation_WATCH_SYNC_OPERATION_SCROBBLE_START, nil)
+	response := applyEvents(t, server, episode, movie)
+	for id, status := range statuses(t, response, episode, movie) {
+		if status != pluginv1.WatchSyncApplyStatus_WATCH_SYNC_APPLY_STATUS_REJECTED {
+			t.Errorf("%s status = %s, want rejected", id, status)
+		}
+	}
+	if requests.Load() != 0 {
+		t.Fatalf("Trakt received %d unidentifiable scrobbles", requests.Load())
 	}
 }
 
